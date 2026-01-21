@@ -283,15 +283,18 @@ const buildContents = (decisionInput: string, attachments: Attachment[] = []) =>
   return { parts, hasUrl };
 };
 
+const getAIClient = () => {
+  const apiKey = process.env.API_KEY || process.env.GEMINI_API_KEY;
+  if (!apiKey) {
+    throw new Error("API Key is missing. Please check your environment variables.");
+  }
+  return new GoogleGenAI({ apiKey });
+};
+
 export const analyzeDecision = async (decisionInput: string, attachments: Attachment[] = []): Promise<AnalysisResponse> => {
   try {
-    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+    const ai = getAIClient();
     
-    const model = ai.models.getGenerativeModel({
-      model: "gemini-2.5-flash-latest",
-      systemInstruction: SYSTEM_PROMPT,
-    });
-
     const { parts, hasUrl } = buildContents(decisionInput, attachments);
 
     // If we have URLs, we should ideally use Search Grounding if available, 
@@ -300,12 +303,14 @@ export const analyzeDecision = async (decisionInput: string, attachments: Attach
     // We will add the tools config conditionally if needed, but here we just pass parts.
     const tools = hasUrl ? [{ googleSearch: {} }] : [];
 
-    const result = await model.generateContent({
+    const result = await ai.models.generateContent({
+      model: "gemini-2.5-flash-latest",
       contents: {
         role: "user",
         parts: parts
       },
       config: {
+        systemInstruction: SYSTEM_PROMPT,
         responseMimeType: "application/json",
         responseSchema: analysisSchema,
         thinkingConfig: { thinkingBudget: 1024 },
@@ -313,7 +318,7 @@ export const analyzeDecision = async (decisionInput: string, attachments: Attach
       }
     });
 
-    const responseText = result.response.text();
+    const responseText = result.text;
     if (!responseText) {
       throw new Error("No response from AI 🛑");
     }
@@ -328,13 +333,8 @@ export const analyzeDecision = async (decisionInput: string, attachments: Attach
 
 export const validateAnalysis = async (decisionInput: string, analysisOutput: AnalysisResponse): Promise<ValidationResponse> => {
   try {
-    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+    const ai = getAIClient();
     
-    const model = ai.models.getGenerativeModel({
-      model: "gemini-2.5-flash-latest",
-      systemInstruction: VALIDATION_SYSTEM_PROMPT,
-    });
-
     const prompt = `
     ORIGINAL DECISION: "${decisionInput}"
     
@@ -346,19 +346,21 @@ export const validateAnalysis = async (decisionInput: string, analysisOutput: An
     Perform the Strategic Validation Assessment (Kahneman + Sun Tzu).
     `;
 
-    const result = await model.generateContent({
+    const result = await ai.models.generateContent({
+      model: "gemini-2.5-flash-latest",
       contents: {
         role: "user",
         parts: [{ text: prompt }]
       },
       config: {
+        systemInstruction: VALIDATION_SYSTEM_PROMPT,
         responseMimeType: "application/json",
         responseSchema: validationSchema,
         thinkingConfig: { thinkingBudget: 1024 }
       }
     });
 
-    const responseText = result.response.text();
+    const responseText = result.text;
     if (!responseText) {
       throw new Error("No validation response from AI 🛑");
     }
@@ -377,13 +379,8 @@ export const performSynthesis = async (
   validationOutput: ValidationResponse
 ): Promise<SynthesisResponse> => {
   try {
-    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+    const ai = getAIClient();
     
-    const model = ai.models.getGenerativeModel({
-      model: "gemini-2.5-flash-latest",
-      systemInstruction: SYNTHESIS_SYSTEM_PROMPT,
-    });
-
     const prompt = `
     PERFORM DIALECTICAL SYNTHESIS ON:
     
@@ -402,19 +399,21 @@ export const performSynthesis = async (
     Generate the Final Integrated Recommendation and Action Plan.
     `;
 
-    const result = await model.generateContent({
+    const result = await ai.models.generateContent({
+      model: "gemini-2.5-flash-latest",
       contents: {
         role: "user",
         parts: [{ text: prompt }]
       },
       config: {
+        systemInstruction: SYNTHESIS_SYSTEM_PROMPT,
         responseMimeType: "application/json",
         responseSchema: synthesisSchema,
         thinkingConfig: { thinkingBudget: 1024 }
       }
     });
 
-    const responseText = result.response.text();
+    const responseText = result.text;
     if (!responseText) {
       throw new Error("No synthesis response from AI 🛑");
     }
@@ -429,22 +428,19 @@ export const performSynthesis = async (
 
 export const performQuickAnalysis = async (decisionInput: string, attachments: Attachment[] = []): Promise<QuickAnalysisResponse> => {
   try {
-    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+    const ai = getAIClient();
     
-    const model = ai.models.getGenerativeModel({
-      model: "gemini-2.5-flash-latest",
-      systemInstruction: QUICK_SYSTEM_PROMPT,
-    });
-
     const { parts, hasUrl } = buildContents(`Quickly analyze this decision: "${decisionInput}"`, attachments);
     const tools = hasUrl ? [{ googleSearch: {} }] : [];
 
-    const result = await model.generateContent({
+    const result = await ai.models.generateContent({
+      model: "gemini-2.5-flash-latest",
       contents: {
         role: "user",
         parts: parts
       },
       config: {
+        systemInstruction: QUICK_SYSTEM_PROMPT,
         responseMimeType: "application/json",
         responseSchema: quickAnalysisSchema,
         thinkingConfig: { thinkingBudget: 512 },
@@ -452,7 +448,7 @@ export const performQuickAnalysis = async (decisionInput: string, attachments: A
       }
     });
 
-    const responseText = result.response.text();
+    const responseText = result.text;
     if (!responseText) {
       throw new Error("No response from AI 🛑");
     }
@@ -467,7 +463,7 @@ export const performQuickAnalysis = async (decisionInput: string, attachments: A
 
 export const sendChatMessage = async (history: { role: string; parts: { text: string }[] }[], message: string): Promise<string> => {
   try {
-    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+    const ai = getAIClient();
     
     const chat = ai.chats.create({
       model: "gemini-3-pro-preview",
@@ -483,9 +479,16 @@ You are helpful, strategic, and rigorous.`,
       history: history
     });
 
-    const result = await chat.sendMessage(message);
+    // Note: The history param in create is for initializing history.
+    // This function creates a new chat session every time, which might lose context if 'history' passed is not the full history.
+    // However, the caller seems to pass the full history.
+
+    const result = await chat.sendMessage({ message: message });
     // Directly access text property
-    return result.text;
+    if (result.text) {
+        return result.text;
+    }
+    return "";
   } catch (error) {
     console.error("Chat failed:", error);
     throw error;
