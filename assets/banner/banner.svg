@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 640" width="1280" height="640" role="img" aria-labelledby="title desc">
+<title id="title">The unsupported span</title><desc id="desc">A bridge drawing marked in red faces a chart of six risk estimates.</desc>
+<defs>
+ <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse"><path d="M40 0H0V40" fill="none" stroke="#899697" opacity=".45"/></pattern>
+ <pattern id="hatch" width="9" height="9" patternUnits="userSpaceOnUse"><path d="m0 9 9-9" stroke="#526064" stroke-width="2"/></pattern>
+</defs>
+<path fill="#202b32" d="M0 0h1280v640H0z"/>
+<g transform="rotate(-3 390 320)">
+ <path fill="#b0aaa0" d="M48 92h676v483H48z"/><path fill="#f1e3c3" d="M37 78h676v483H37z"/>
+ <path fill="url(#grid)" d="M37 78h676v483H37z"/>
+ <g stroke="#223640" fill="none" stroke-width="7" stroke-linejoin="round">
+ <path d="M77 363h592M79 378h590M80 360l89-108 91 108 91-108 91 108 91-108 130 108M169 252h364M169 252v109m182-109v109m182-109v109"/>
+ <path d="M104 380v67h32v-67m456 0v67h32v-67" fill="url(#hatch)"/>
+ </g><g stroke="#b5392f" fill="none"><ellipse cx="351" cy="373" rx="72" ry="43" stroke-width="6" transform="rotate(-13 351 373)"/><path d="m385 403 74 73h174" stroke-width="3"/><path d="m322 444 29-65 29 65" stroke-width="3" stroke-dasharray="6 5"/></g>
+</g>
+<path fill="#14242b" stroke="#728384" d="M772 97h444v445H772z"/><path fill="url(#grid)" d="M800 120h388v390H800z"/>
+<path d="M805 135v369h373" fill="none" stroke="#e9ddc3" stroke-width="3"/><path d="M995 133v370m-189-183h369" stroke="#bdc4bc" stroke-dasharray="8 7"/>
+<g stroke="#15282c" stroke-width="4"><circle cx="857" cy="449" r="11" fill="#eab308"/><circle cx="941" cy="398" r="12" fill="#eab308"/><circle cx="979" cy="256" r="14" fill="#f97316"/><circle cx="1061" cy="287" r="13" fill="#f97316"/><circle cx="1114" cy="208" r="15" fill="#ef4444"/><circle cx="1151" cy="171" r="12" fill="#ef4444"/></g>
+<g stroke="#e9ddc3" fill="none"><circle cx="1114" cy="208" r="26"/><path d="M1076 208h13m49 0h13m-37-37v13m0 49v13"/></g>
+</svg>
